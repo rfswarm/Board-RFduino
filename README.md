@@ -53,3 +53,74 @@ common ground:       GND <-----------> GND
 supply voltage:      VDD <-----------> 3V
 SWD clock:           SWD <-----------> SWCLK (CN3, pin2)
 SWD data I/O:      SWDIO <-----------> SWDIO (CN3, pin4)
+```
+
+### Software
+Debugging and programming the RFduino module works well with [[OpenOCD]]. 
+
+We suggest to use a fairly recent version, best use the upstream version from their [git repository](http://sourceforge.net/p/openocd/code/ci/master/tree/). Version 0.9.0-dev-* is reported to work.
+
+### Programming the Device
+To program the RFduino module, just go to your RIOT application and type:
+```
+make flash
+```
+and voila, the new firmware should be flashed onto your device.
+
+### Resetting the Device
+As the RFduino module does not provide a reset button, RIOT includes a target to reset the board. To do that, just type
+```
+make reset
+```
+and your board will reboot.
+
+### Programming the device manually
+For OpenOCD to work correctly, you need the following configuration file (which you can also find in `RIOTDIR/boards/yunjia-nrf51822/dist/openocd.cfg`:
+
+```
+ $ cat RIOTDIR/boards/yunjia-nrf51822/openocd.cfg
+# nRF51822 Target
+source [find interface/stlink-v2.cfg]
+
+transport select hla_swd
+
+set WORKAREASIZE 0x4000
+source [find target/nrf51.cfg]
+
+# use hardware reset, connect under reset
+#reset_config srst_only srst_nogate
+```
+
+You can now program your device by doing the following:
+
+1. start openocd with: `openocd -d3 -f RIOTDIR/boards/yunjia-nrf51822/dist/openocd.cfg`
+2. open a new terminal an connect with telnet: `telnet 127.0.0.1 4444`
+3. do the following steps to flash (only use bank #0 starting from address 0):
+
+```
+> flash banks
+#0 : nrf51.flash (nrf51) at 0x00000000, size 0x00040000, buswidth 1, chipwidth 1
+#1 : nrf51.uicr (nrf51) at 0x10001000, size 0x000000fc, buswidth 1, chipwidth 1
+
+> halt
+target state: halted
+target halted due to debug-request, current mode: Thread 
+xPSR: 0x61000000 pc: 0x00000e1a msp: 0x20001b2c
+
+> flash write_image erase PATH-TO-YOUR-BINARY/YOUR-BINARY.bin 0
+wrote xxx bytes from file PATH-TO-YOUR-BINARY/YOUR-BINARY.bin in xx.yys (x.yyy KiB/s)
+
+> reset
+```
+
+### Using UART
+
+The UART pins are configured in `boards/yunjia-nrf51822/include/periph_conf.h`.
+The default values are PIN 1 and 2.
+
+The default Baud rate is `115 200`.
+
+### Troubleshooting
+#### Protected at factory (error writing to flash at address 0x000... )
+
+run "nrf51 mass_erase" to remove the protected flag on the boot-loader region. RIOT does not use the proprietary nordic "soft-device".
