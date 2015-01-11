@@ -137,6 +137,17 @@ For a quick fix just comment out the LED_RED_TOGGLE call at line 103 and recompi
 // LED_RED_TOGGLE;
 ```
 
-#### Protected at factory (error writing to flash at address 0x000... )
+#### Unlocking the flash memory
 
-run "nrf51 mass_erase" to remove the protected flag on the boot-loader region. RIOT does not use the proprietary nordic "soft-device".
+If you holding a new device in your hands, there is a high change that your device's flash memory is locket and RIOT's make flash command will fail, saying something about erasing the flash was not possible.
+
+A solution for this is to reset the chips code memory and user information registers. Just follow these steps:
+
+Follow the steps described above for manually flashing the device:
+
+1. start openocd with: `openocd -d3 -f RIOTDIR/boards/rfduino/dist/openocd.cfg`
+2. open a new terminal an connect with telnet: `telnet 127.0.0.1 4444`
+3. type `halt` to stop the device
+4. type `nrf51 mass_erase` to reset the code memory
+5. all done, make flash should now work as expected.
+
