@@ -44,15 +44,15 @@ now replug the usb cable and flash.
 
 Have a look at the 'Setting up udev rules' section in this [README file](https://github.com/texane/stlink/blob/master/README) if you need help.
 
-Second you need to enable the stand-alone ST-Link mode of the discovery board by removing the two `CN2` jumpers, found somewhere in the upper right part of the board. This disconnects the ST-Link programmer from the micro-controller part of the port and enables direct access through the pin-header `CN3`, also labled `SWD`.
+Second you need to enable the stand-alone ST-Link mode of the discovery board by removing the two `CN2` jumpers, found somewhere in the upper right part of the board. This disconnects the ST-Link programmer from the micro-controller part of the port and enables direct access through the pin-header `CN3`, also labled `SWD`. The white dot tells you the position of pin1.
 
 The RFduino module supports the Serial Wire Debug (SWD) interface. To access the device the following four lines need to be connected with the STM32x-discovery board:
 ```
                  RFduino module    STM32Fx-discovery
 common ground:       GND <-----------> GND
 supply voltage:      VDD <-----------> 3V
-SWD clock:           SWD <-----------> SWCLK (CN3, pin2)
-SWD data I/O:      SWDIO <-----------> SWDIO (CN3, pin4)
+SWD clock:       FACTORY <-----------> SWCLK (CN3, pin2)
+SWD data I/O:      RESET <-----------> SWDIO (CN3, pin4)
 ```
 
 ### Software
@@ -75,10 +75,10 @@ make reset
 and your board will reboot.
 
 ### Programming the device manually
-For OpenOCD to work correctly, you need the following configuration file (which you can also find in `RIOTDIR/boards/yunjia-nrf51822/dist/openocd.cfg`:
+For OpenOCD to work correctly, you need the following configuration file (which you can also find in `RIOTDIR/boards/rfduino/dist/openocd.cfg`:
 
 ```
- $ cat RIOTDIR/boards/yunjia-nrf51822/openocd.cfg
+$ cat RIOTDIR/boards/rfduino/openocd.cfg
 # nRF51822 Target
 source [find interface/stlink-v2.cfg]
 
@@ -93,7 +93,7 @@ source [find target/nrf51.cfg]
 
 You can now program your device by doing the following:
 
-1. start openocd with: `openocd -d3 -f RIOTDIR/boards/yunjia-nrf51822/dist/openocd.cfg`
+1. start openocd with: `openocd -d3 -f RIOTDIR/boards/rfduino/dist/openocd.cfg`
 2. open a new terminal an connect with telnet: `telnet 127.0.0.1 4444`
 3. do the following steps to flash (only use bank #0 starting from address 0):
 
@@ -115,12 +115,28 @@ wrote xxx bytes from file PATH-TO-YOUR-BINARY/YOUR-BINARY.bin in xx.yys (x.yyy K
 
 ### Using UART
 
-The UART pins are configured in `boards/yunjia-nrf51822/include/periph_conf.h`.
+The UART pins are configured in `boards/rfduino/include/periph_conf.h`.
 The default values are PIN 1 and 2.
 
 The default Baud rate is `115 200`.
 
+It is also possible to use the USB Shield for RFduino (RFD22121) as UART adapter.
+The PIN numbering is a bit confusing, here is an example on how to use GPIO0 (AREF) and GPIO1
+as UART pins you have to change `boards/rfduino/include/periph_conf.h`:
+
+```
+#define UART_PIN_RX 0
+#define UART_PIN_TX 1
+```
+
 ### Troubleshooting
+#### Compilation error (cpu/nrf51822/startup.c: LED_RED_TOGGLE undeclared)
+For a quick fix just comment out the LED_RED_TOGGLE call at line 103 and recompile.
+
+```
+// LED_RED_TOGGLE;
+```
+
 #### Protected at factory (error writing to flash at address 0x000... )
 
 run "nrf51 mass_erase" to remove the protected flag on the boot-loader region. RIOT does not use the proprietary nordic "soft-device".
