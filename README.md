@@ -137,7 +137,7 @@ For a quick fix just comment out the LED_RED_TOGGLE call at line 103 and recompi
 // LED_RED_TOGGLE;
 ```
 
-#### Unlocking the flash memory
+#### Unlocking the flash memory (error erasing or writing to flash at address...)
 
 If you holding a new device in your hands, there is a high change that your device's flash memory is locket and RIOT's make flash command will fail, saying something about erasing the flash was not possible.
 
